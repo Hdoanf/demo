@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý tài liệu - Kho Tài Liệu Sinh Viên</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        .document-card {
+            transition: all 0.3s ease;
+        }
+        .document-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .modal {
+            transition: all 0.3s ease;
+        }
+        .modal.active {
+            display: flex;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        
+        /* Robot Button Styles */
+        .robot-button {
+            position: fixed !important;
+            bottom: 0px !important;
+            right: 30px !important;
+            width: 200px;
+            height: 200px;
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .robot-button:hover {
+            transform: scale(1.1);
+        }
+        
+        #lottie-robot {
+            width: 180px;
+            height: 180px;
+        }
+        
+        /* Chat Widget Styles */
+        .chat-widget {
+            position: fixed;
+            bottom: 150px;
+            right: 30px;
+            width: 380px;
+            height: 550px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            z-index: 999;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background: #f9fafb;
+        }
+        
+        .chat-input-area {
+            padding: 15px;
+            border-top: 1px solid #e5e7eb;
+            background: white;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .message-user {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 18px;
+            max-width: 80%;
+            margin-left: auto;
+            margin-bottom: 10px;
+            word-wrap: break-word;
+        }
+        
+        .message-bot {
+            background: #e5e7eb;
+            color: #1f2937;
+            padding: 8px 12px;
+            border-radius: 18px;
+            max-width: 80%;
+            margin-right: auto;
+            margin-bottom: 10px;
+            word-wrap: break-word;
+        }
+        
+        .typing-indicator {
+            display: inline-block;
+            padding: 8px 12px;
+            background: #e5e7eb;
+            border-radius: 18px;
+            margin-bottom: 10px;
+        }
+        
+        .typing-dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: #6b7280;
+            margin: 0 2px;
+            animation: typing 1.4s infinite;
+        }
+        
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+            30% { transform: translateY(-5px); opacity: 1; }
+        }
+        
+        /* Major Badge */
+        .major-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 500;
+            background: #e9d5ff;
+            color: #6b21a5;
+        }
+        
+        /* Major Stats Card */
+        .major-stat-card {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .major-stat-card:hover {
+            transform: translateY(-2px);
+            opacity: 0.9;
+        }
+        .major-stat-card.active {
+            ring: 2px solid white;
+            transform: scale(1.02);
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="text-white hover:text-blue-200 transition">
+                        <i class="fas fa-arrow-left text-xl"></i>
+                    </a>
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-folder-open text-white text-xl"></i>
+                        </div>
+                        <h1 class="text-2xl font-bold text-white">Quản lý tài liệu</h1>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <span id="total-stats" class="text-white text-sm bg-white bg-opacity-20 px-3 py-1 rounded-full">
+                        Đang tải...
+                    </span>
+                    <button onclick="window.location.href='/'" 
+                            class="bg-white text-purple-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition">
+                        <i class="fas fa-comment-dots mr-2"></i>
+                        Về Chatbot
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Thống kê theo ngành -->
+        <div class="mb-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <i class="fas fa-chart-pie text-purple-500"></i>
+                Thống kê theo ngành
+            </h3>
+            <div id="majors-stats" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                <div class="text-center py-4 text-gray-500">Đang tải...</div>
+            </div>
+        </div>
+        
+        <!-- Search và Filter -->
+        <div class="bg-white rounded-xl shadow-md p-6 mb-8 fade-in">
+            <div class="flex flex-col md:flex-row gap-4">
+                <div class="flex-1 relative">
+                    <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    <input type="text" 
+                           id="search-input"
+                           placeholder="Tìm kiếm tài liệu..." 
+                           class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                </div>
+                <div class="flex gap-3">
+                    <!-- Bộ lọc theo ngành -->
+                    <select id="major-filter" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white">
+                        <option value="all">📁 Tất cả ngành</option>
+                    </select>
+                    <!-- Bộ lọc sắp xếp -->
+                    <select id="sort-select" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        <option value="newest">🕐 Mới nhất</option>
+                        <option value="oldest">🕐 Cũ nhất</option>
+                        <option value="name">🔤 Tên A-Z</option>
+                        <option value="size">📦 Kích thước</option>
+                    </select>
+                    <button onclick="refreshDocuments()" 
+                            class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition">
+                        <i class="fas fa-sync-alt mr-2"></i>
+                        Làm mới
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Thống kê nhanh -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 fade-in">
+            <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-blue-100 text-sm">Tổng số tài liệu</p>
+                        <p id="total-docs" class="text-3xl font-bold mt-2">0</p>
+                    </div>
+                    <i class="fas fa-file-pdf text-5xl opacity-50"></i>
+                </div>
+            </div>
+            <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-green-100 text-sm">Tổng dung lượng</p>
+                        <p id="total-size" class="text-3xl font-bold mt-2">0 MB</p>
+                    </div>
+                    <i class="fas fa-database text-5xl opacity-50"></i>
+                </div>
+            </div>
+            <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl shadow-lg p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-purple-100 text-sm">Đã tải về</p>
+                        <p id="download-count" class="text-3xl font-bold mt-2">0</p>
+                    </div>
+                    <i class="fas fa-download text-5xl opacity-50"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Danh sách tài liệu -->
+        <div id="documents-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="col-span-full text-center py-12">
+                <i class="fas fa-spinner fa-spin text-4xl text-purple-500 mb-4"></i>
+                <p class="text-gray-500">Đang tải danh sách tài liệu...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal xem PDF -->
+    <div id="pdf-modal" class="fixed inset-0 bg-black bg-opacity-75 hidden items-center justify-center z-50" style="display: none;">
+        <div class="bg-white rounded-xl w-11/12 h-5/6 flex flex-col">
+            <div class="flex justify-between items-center p-4 border-b">
+                <h3 id="modal-title" class="text-lg font-semibold text-gray-800">Xem tài liệu</h3>
+                <button onclick="closePdfModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            <div class="flex-1 p-4 overflow-auto">
+                <iframe id="pdf-viewer" src="" class="w-full h-full border-0"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- Robot Button với Lottie Animation -->
+    <div id="robot-button" class="robot-button">
+        <div id="lottie-robot"></div>
+    </div>
+
+    <!-- Chat Widget -->
+    <div id="chat-widget" class="chat-widget">
+        <div class="chat-header">
+            <div class="flex items-center gap-2">
+                <i class="fas fa-robot text-xl"></i>
+                <span class="font-semibold">Amy - Trợ lý AI</span>
+            </div>
+            <button onclick="toggleChat()" class="text-white hover:text-gray-200">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div id="chat-messages" class="chat-messages">
+            <div class="message-bot">
+                Xin chào! Mình là Amy, mình có thể giúp gì cho bạn? ^^
+            </div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" 
+                   id="chat-input" 
+                   placeholder="Nhập câu hỏi của bạn..." 
+                   class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                   onkeypress="if(event.key === 'Enter') sendMessage()">
+            <button onclick="sendMessage()" 
+                    class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-lg hover:opacity-90">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let documents = [];
+        let downloadStats = JSON.parse(localStorage.getItem('downloadStats') || '{}');
+        let lottieAnimation = null;
+        let currentMajorFilter = 'all';
+
+        // ========== HÀM CHAT ==========
+        
+        function toggleChat() {
+            const chatWidget = document.getElementById('chat-widget');
+            if (chatWidget.style.display === 'none' || chatWidget.style.display === '') {
+                chatWidget.style.display = 'flex';
+            } else {
+                chatWidget.style.display = 'none';
+            }
+        }
+
+        function showTyping() {
+            const messagesDiv = document.getElementById('chat-messages');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'typing-indicator';
+            typingDiv.id = 'typing-indicator';
+            typingDiv.innerHTML = `
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+            `;
+            messagesDiv.appendChild(typingDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function hideTyping() {
+            const typingIndicator = document.getElementById('typing-indicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            const messagesDiv = document.getElementById('chat-messages');
+            
+            const userMessageDiv = document.createElement('div');
+            userMessageDiv.className = 'message-user';
+            userMessageDiv.textContent = message;
+            messagesDiv.appendChild(userMessageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            
+            input.value = '';
+            showTyping();
+            
+            try {
+                const response = await fetch('/ask', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question: message })
+                });
+                
+                const data = await response.json();
+                hideTyping();
+                
+                const botMessageDiv = document.createElement('div');
+                botMessageDiv.className = 'message-bot';
+                
+                if (response.ok && data.answer) {
+                    botMessageDiv.textContent = data.answer;
+                    if (data.sources && data.sources.length > 0) {
+                        const sourceSpan = document.createElement('div');
+                        sourceSpan.style.fontSize = '10px';
+                        sourceSpan.style.marginTop = '5px';
+                        sourceSpan.style.color = '#6b7280';
+                        sourceSpan.innerHTML = `<i class="fas fa-book"></i> Nguồn: ${data.sources.join(', ')}`;
+                        botMessageDiv.appendChild(sourceSpan);
+                    }
+                } else {
+                    botMessageDiv.textContent = data.detail || 'Xin lỗi, tôi chưa có thông tin về câu hỏi này.';
+                }
+                
+                messagesDiv.appendChild(botMessageDiv);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                
+            } catch (error) {
+                console.error('Lỗi:', error);
+                hideTyping();
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'message-bot';
+                errorDiv.textContent = 'Xin lỗi, có lỗi xảy ra khi kết nối đến server. Vui lòng thử lại sau.';
+                messagesDiv.appendChild(errorDiv);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            }
+        }
+
+        // ========== LOTTIE ANIMATION ==========
+        
+        function initLottie() {
+            const container = document.getElementById('lottie-robot');
+            if (!container) return;
+            try {
+                lottieAnimation = lottie.loadAnimation({
+                    container: container,
+                    renderer: 'svg',
+                    loop: true,
+                    autoplay: true,
+                    path: '/static/robot.json'
+                });
+            } catch (err) {
+                console.error('Lỗi load Lottie:', err);
+            }
+        }
+
+        // ========== QUẢN LÝ TÀI LIỆU ==========
+        
+        function updateDownloadStats(fileName) {
+            downloadStats[fileName] = (downloadStats[fileName] || 0) + 1;
+            localStorage.setItem('downloadStats', JSON.stringify(downloadStats));
+            renderDownloadCount();
+        }
+
+        function renderDownloadCount() {
+            const total = Object.values(downloadStats).reduce((a, b) => a + b, 0);
+            document.getElementById('download-count').textContent = total;
+        }
+
+        // Cập nhật thống kê theo ngành
+        function updateMajorStats() {
+            const majorCounts = {};
+            documents.forEach(doc => {
+                const major = doc.major || 'Khác';
+                majorCounts[major] = (majorCounts[major] || 0) + 1;
+            });
+            
+            const majorsList = Object.keys(majorCounts).sort();
+            const statsContainer = document.getElementById('majors-stats');
+            
+            if (majorsList.length === 0) {
+                statsContainer.innerHTML = '<div class="col-span-full text-center py-2 text-gray-500">Chưa có tài liệu</div>';
+                return;
+            }
+            
+            statsContainer.innerHTML = majorsList.map(major => `
+                <div class="major-stat-card bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg p-3 text-white text-center ${currentMajorFilter === major ? 'ring-2 ring-white ring-offset-2' : ''}"
+                     onclick="filterByMajor('${major}')">
+                    <p class="text-xs opacity-90 truncate">${escapeHtml(major)}</p>
+                    <p class="text-xl font-bold">${majorCounts[major]}</p>
+                </div>
+            `).join('');
+            
+            // Cập nhật dropdown filter
+            const filterSelect = document.getElementById('major-filter');
+            filterSelect.innerHTML = '<option value="all">📁 Tất cả ngành</option>' + 
+                majorsList.map(major => `<option value="${major}" ${currentMajorFilter === major ? 'selected' : ''}>${major}</option>`).join('');
+        }
+        
+        function filterByMajor(major) {
+            currentMajorFilter = major;
+            const filterSelect = document.getElementById('major-filter');
+            filterSelect.value = major;
+            updateMajorStats();
+            renderDocuments();
+        }
+
+        async function loadDocuments() {
+            try {
+                const response = await fetch('/api/documents');
+                const data = await response.json();
+                
+                if (data.success) {
+                    documents = data.documents;
+                    document.getElementById('total-docs').textContent = data.total;
+                    document.getElementById('total-size').textContent = data.total_size_mb + ' MB';
+                    updateMajorStats();
+                    renderDocuments();
+                } else {
+                    showError('Không thể tải danh sách tài liệu');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Lỗi kết nối đến server');
+            }
+        }
+
+        function renderDocuments() {
+            const container = document.getElementById('documents-container');
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            const sortBy = document.getElementById('sort-select').value;
+            const majorFilter = document.getElementById('major-filter').value;
+            
+            let filteredDocs = documents.filter(doc => {
+                const matchSearch = (doc.original_name || doc.name).toLowerCase().includes(searchTerm);
+                const matchMajor = majorFilter === 'all' || doc.major === majorFilter;
+                return matchSearch && matchMajor;
+            });
+            
+            filteredDocs.sort((a, b) => {
+                switch(sortBy) {
+                    case 'newest': return new Date(b.last_modified) - new Date(a.last_modified);
+                    case 'oldest': return new Date(a.last_modified) - new Date(b.last_modified);
+                    case 'name': return (a.original_name || a.name).localeCompare(b.original_name || b.name);
+                    case 'size': return b.size - a.size;
+                    default: return 0;
+                }
+            });
+            
+            if (filteredDocs.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center py-12"><i class="fas fa-folder-open text-6xl text-gray-300 mb-4"></i><p class="text-gray-500">Không tìm thấy tài liệu nào</p></div>`;
+                return;
+            }
+            
+            container.innerHTML = filteredDocs.map(doc => `
+                <div class="document-card bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all fade-in">
+                    <div class="bg-gradient-to-r from-gray-50 to-gray-100 p-4 border-b">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="major-badge">${escapeHtml(doc.major || 'Khác')}</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-file-pdf text-red-500 text-3xl"></i>
+                            <div class="flex-1 min-w-0">
+                                <h3 class="font-semibold text-gray-800 truncate" title="${escapeHtml(doc.original_name || doc.name)}">${escapeHtml(doc.original_name || doc.name)}</h3>
+                                <p class="text-xs text-gray-500 mt-1">${doc.size_mb} MB • ${doc.last_modified_display}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <div class="flex gap-2">
+                            <button onclick="viewDocument('${doc.name}')" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg text-sm"><i class="fas fa-eye mr-1"></i> Xem</button>
+                            <button onclick="downloadDocument('${doc.name}')" class="flex-1 bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-sm"><i class="fas fa-download mr-1"></i> Tải về</button>
+                            <button onclick="deleteDocument('${doc.name}')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function viewDocument(fileName) {
+            try {
+                const response = await fetch(`/api/view/${fileName}`);
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('pdf-viewer').src = data.url;
+                    document.getElementById('modal-title').textContent = fileName;
+                    document.getElementById('pdf-modal').style.display = 'flex';
+                } else {
+                    showError('Không thể xem tài liệu');
+                }
+            } catch (error) {
+                showError('Lỗi khi xem tài liệu');
+            }
+        }
+
+        async function downloadDocument(fileName) {
+            try {
+                window.open(`/api/download/${fileName}`, '_blank');
+                updateDownloadStats(fileName);
+                showSuccess(`Đang tải: ${fileName}`);
+            } catch (error) {
+                showError('Lỗi khi tải file');
+            }
+        }
+
+        async function deleteDocument(fileName) {
+            if (!confirm(`Bạn có chắc muốn xóa "${fileName}"?`)) return;
+            try {
+                const response = await fetch(`/api/documents/${fileName}`, { method: 'DELETE' });
+                const data = await response.json();
+                if (data.success) {
+                    showSuccess(`Đã xóa ${fileName}`);
+                    loadDocuments();
+                } else {
+                    showError(data.error || 'Xóa thất bại');
+                }
+            } catch (error) {
+                showError('Lỗi khi xóa tài liệu');
+            }
+        }
+
+        function refreshDocuments() { loadDocuments(); showSuccess('Đã làm mới danh sách'); }
+        function closePdfModal() { document.getElementById('pdf-modal').style.display = 'none'; document.getElementById('pdf-viewer').src = ''; }
+        function showSuccess(message) { showToast(message, 'success'); }
+        function showError(message) { showToast(message, 'error'); }
+        function showToast(message, type) {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg text-white z-50 fade-in ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+            toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} mr-2"></i>${message}`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+        function escapeHtml(text) { const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+
+        // ========== KHỞI TẠO ==========
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Gán sự kiện
+            document.getElementById('search-input').addEventListener('input', renderDocuments);
+            document.getElementById('sort-select').addEventListener('change', renderDocuments);
+            document.getElementById('major-filter').addEventListener('change', function(e) {
+                currentMajorFilter = e.target.value;
+                updateMajorStats();
+                renderDocuments();
+            });
+            document.getElementById('pdf-modal').addEventListener('click', (e) => { if (e.target === e.currentTarget) closePdfModal(); });
+            document.getElementById('robot-button').addEventListener('click', toggleChat);
+            
+            // Khởi tạo
+            renderDownloadCount();
+            loadDocuments();
+            initLottie();
+            
+            // Auto refresh
+            setInterval(loadDocuments, 30000);
+        });
+    </script>
+
+</body>
+</html>

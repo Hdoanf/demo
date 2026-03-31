@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Star Sky Pro</title>
+<style>
+body {
+  margin: 0;
+  overflow: hidden;
+  background: radial-gradient(ellipse at bottom, #0b0c2a 0%, #000 100%);
+}
+canvas { display: block; }
+</style>
+</head>
+<body>
+
+<canvas id="sky"></canvas>
+
+<script>
+const canvas = document.getElementById("sky");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+// ⭐ STAR
+let stars = [];
+for (let i = 0; i < 1500; i++) {
+  stars.push({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    r: Math.random() * 0.8,
+    alpha: Math.random(),
+    speed: Math.random() * 0.3
+  });
+}
+
+// 🌠 METEOR
+let meteors = [];
+
+function createMeteor() {
+  meteors.push({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height / 2,
+    len: Math.random() * 300 + 100,
+    speed: Math.random() * 8 + 4,
+    alpha: 1
+  });
+}
+
+// 🌠 tạo 3–4 sao băng mỗi lần
+setInterval(() => {
+  let count = Math.floor(Math.random() * 2) + 3; // 3 hoặc 4
+  for (let i = 0; i < count; i++) {
+    createMeteor();
+  }
+}, 1500);
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // ⭐ draw stars
+  for (let s of stars) {
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(255,255,255," + s.alpha + ")";
+    ctx.fill();
+
+    // nhấp nháy
+    s.alpha += (Math.random() - 0.5) * 0.05;
+    s.alpha = Math.max(0, Math.min(1, s.alpha));
+
+    // chuyển động nhẹ
+    s.y += s.speed;
+    if (s.y > canvas.height) {
+      s.y = 0;
+      s.x = Math.random() * canvas.width;
+    }
+  }
+
+  // 🌠 draw meteors
+  for (let i = meteors.length - 1; i >= 0; i--) {
+    let m = meteors[i];
+
+    let gradient = ctx.createLinearGradient(
+      m.x, m.y,
+      m.x - m.len, m.y - m.len
+    );
+
+    gradient.addColorStop(0, "rgba(255,255,255,1)");
+    gradient.addColorStop(1, "rgba(255,255,255,0)");
+
+    ctx.strokeStyle = gradient;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(m.x, m.y);
+    ctx.lineTo(m.x - m.len, m.y - m.len);
+    ctx.stroke();
+
+    m.x += m.speed;
+    m.y += m.speed;
+    m.alpha -= 0.01;
+
+    if (m.alpha <= 0) meteors.splice(i, 1);
+  }
+
+  requestAnimationFrame(draw);
+}
+
+draw();
+
+// resize
+window.addEventListener("resize", () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
+</script>
+
+</body>
+</html>
