@@ -24,7 +24,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.documents import Document
 
 # Load biến môi trường
-load_dotenv(r"D:\web tài liệu sinh viên\.env")
+load_dotenv()
 
 print("="*50)
 print("Kiểm tra cấu hình:")

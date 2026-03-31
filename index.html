@@ -470,6 +470,9 @@
     </div>
 
     <script>
+        const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+            ? '' 
+            : 'https://backend-cua-ban.onrender.com'; // <--- THAY LINK NÀY SAU KHI DEPLOY RENDER
         // ========== QUẢN LÝ LỊCH SỬ CHAT ==========
         let conversations = [];
         let currentConversationId = null;
@@ -550,17 +553,17 @@
         
         // ========== QUẢN LÝ TÀI LIỆU ==========
         let selectedFile = null;
-        async function loadDocuments() { try { const res = await fetch("/api/documents"); const data = await res.json(); const container = document.getElementById('document-list'); if (!container) return; if (!data.success || data.documents.length === 0) { container.innerHTML = `<div class="text-center text-gray-500 py-4 text-xs"><i class="fas fa-folder-open text-2xl mb-1 opacity-50"></i><p>Chưa có tài liệu</p></div>`; return; } container.innerHTML = data.documents.map(doc => `<div class="document-item flex items-center justify-between p-2 bg-gray-50 rounded-lg"><div class="flex items-center gap-2 flex-1 min-w-0"><i class="fas fa-file-pdf text-red-500 text-sm"></i><div class="flex-1 min-w-0"><p class="text-xs font-medium truncate">${escapeHtml(doc.original_name)}</p><p class="text-[10px] text-gray-500">${(doc.size_mb).toFixed(1)} MB</p></div></div><div class="flex gap-1"><button onclick="viewDocumentFromChat('${doc.name}')" class="btn-sm-view"><i class="fas fa-eye"></i> Xem</button><button onclick="confirmDownloadFromChat('${doc.name}', '${escapeHtml(doc.original_name)}')" class="btn-sm-download"><i class="fas fa-download"></i> Tải</button><button onclick="deleteDocument('${doc.name}')" class="text-red-500 text-xs"><i class="fas fa-trash-alt"></i></button></div></div>`).join(''); } catch (err) { console.error(err); } }
-        async function deleteDocument(fileName) { if(!confirm(`Xóa tài liệu?`)) return; try { const res = await fetch(`/api/documents/${fileName}`, {method:'DELETE'}); const data = await res.json(); if(data.success){ showToast('Đã xóa','success'); loadDocuments(); checkStatus(); } else showToast('Xóa thất bại','error'); } catch(err){ showToast('Lỗi kết nối','error'); } }
-        async function deleteAllDocuments() { if(!confirm('Xóa TẤT CẢ tài liệu?')) return; try { const res = await fetch('/delete-all-documents', {method:'DELETE'}); const data = await res.json(); if(data.success){ showToast('Đã xóa tất cả','success'); loadDocuments(); checkStatus(); } else showToast('Xóa thất bại','error'); } catch(err){ showToast('Lỗi kết nối','error'); } }
+        async function loadDocuments() { try { const res = await fetch(API_URL + "/api/documents"); const data = await res.json(); const container = document.getElementById('document-list'); if (!container) return; if (!data.success || data.documents.length === 0) { container.innerHTML = `<div class="text-center text-gray-500 py-4 text-xs"><i class="fas fa-folder-open text-2xl mb-1 opacity-50"></i><p>Chưa có tài liệu</p></div>`; return; } container.innerHTML = data.documents.map(doc => `<div class="document-item flex items-center justify-between p-2 bg-gray-50 rounded-lg"><div class="flex items-center gap-2 flex-1 min-w-0"><i class="fas fa-file-pdf text-red-500 text-sm"></i><div class="flex-1 min-w-0"><p class="text-xs font-medium truncate">${escapeHtml(doc.original_name)}</p><p class="text-[10px] text-gray-500">${(doc.size_mb).toFixed(1)} MB</p></div></div><div class="flex gap-1"><button onclick="viewDocumentFromChat('${doc.name}')" class="btn-sm-view"><i class="fas fa-eye"></i> Xem</button><button onclick="confirmDownloadFromChat('${doc.name}', '${escapeHtml(doc.original_name)}')" class="btn-sm-download"><i class="fas fa-download"></i> Tải</button><button onclick="deleteDocument('${doc.name}')" class="text-red-500 text-xs"><i class="fas fa-trash-alt"></i></button></div></div>`).join(''); } catch (err) { console.error(err); } }
+        async function deleteDocument(fileName) { if(!confirm(`Xóa tài liệu?`)) return; try { const res = await fetch(API_URL + `/api/documents/${fileName}`, {method:'DELETE'}); const data = await res.json(); if(data.success){ showToast('Đã xóa','success'); loadDocuments(); checkStatus(); } else showToast('Xóa thất bại','error'); } catch(err){ showToast('Lỗi kết nối','error'); } }
+        async function deleteAllDocuments() { if(!confirm('Xóa TẤT CẢ tài liệu?')) return; try { const res = await fetch(API_URL + '/delete-all-documents', {method:'DELETE'}); const data = await res.json(); if(data.success){ showToast('Đã xóa tất cả','success'); loadDocuments(); checkStatus(); } else showToast('Xóa thất bại','error'); } catch(err){ showToast('Lỗi kết nối','error'); } }
         function showToast(message, type='success') { const toast = document.createElement('div'); toast.className = `fixed bottom-4 right-4 px-3 py-1.5 rounded-lg shadow-lg text-white z-50 fade-in text-sm ${type==='success'?'bg-green-500':'bg-red-500'}`; toast.innerHTML = `<i class="fas ${type==='success'?'fa-check-circle':'fa-exclamation-circle'} mr-1 text-xs"></i>${message}`; document.body.appendChild(toast); setTimeout(()=>toast.remove(),3000); }
-        async function checkStatus() { try{ const res=await fetch("/status"); const data=await res.json(); const badge=document.getElementById('status-badge'); if(badge){ if(data.status==='ready'){ badge.innerHTML='<i class="fas fa-check-circle mr-1"></i>Sẵn sàng'; badge.className='px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs'; } else { badge.innerHTML='<i class="fas fa-exclamation-circle mr-1"></i>Chưa có'; badge.className='px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-xs'; } } }catch(err){} }
+        async function checkStatus() { try{ const res=await fetch(API_URL + "/status"); const data=await res.json(); const badge=document.getElementById('status-badge'); if(badge){ if(data.status==='ready'){ badge.innerHTML='<i class="fas fa-check-circle mr-1"></i>Sẵn sàng'; badge.className='px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs'; } else { badge.innerHTML='<i class="fas fa-exclamation-circle mr-1"></i>Chưa có'; badge.className='px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-xs'; } } }catch(err){} }
         function handleFileSelect(e){ selectedFile=e.target.files[0]; if(selectedFile){ document.getElementById('file-info').classList.remove('hidden'); document.getElementById('file-name').textContent=selectedFile.name; document.getElementById('upload-btn').classList.remove('hidden'); } }
-        async function uploadPDF(){ if(!selectedFile) return; const formData=new FormData(); formData.append("file",selectedFile); formData.append("major",document.getElementById('major-select').value); const btn=document.getElementById('upload-btn'); const originalHTML=btn.innerHTML; btn.innerHTML='<i class="fas fa-spinner fa-spin mr-1"></i>Đang upload...'; btn.disabled=true; try{ const res=await fetch("/upload",{method:"POST",body:formData}); const data=await res.json(); if(res.ok){ showToast(`✅ Upload thành công vào ngành: ${data.major}`, 'success'); document.getElementById('file-info').classList.add('hidden'); btn.classList.add('hidden'); selectedFile=null; document.getElementById('file-input').value=''; setTimeout(()=>{ loadDocuments(); checkStatus(); },1000); } else showToast(data.detail||"Upload thất bại",'error'); }catch(err){ showToast("Không kết nối được với server",'error'); } btn.innerHTML=originalHTML; btn.disabled=false; }
+        async function uploadPDF(){ if(!selectedFile) return; const formData=new FormData(); formData.append("file",selectedFile); formData.append("major",document.getElementById('major-select').value); const btn=document.getElementById('upload-btn'); const originalHTML=btn.innerHTML; btn.innerHTML='<i class="fas fa-spinner fa-spin mr-1"></i>Đang upload...'; btn.disabled=true; try{ const res=await fetch(API_URL + "/upload",{method:"POST",body:formData}); const data=await res.json(); if(res.ok){ showToast(`✅ Upload thành công vào ngành: ${data.major}`, 'success'); document.getElementById('file-info').classList.add('hidden'); btn.classList.add('hidden'); selectedFile=null; document.getElementById('file-input').value=''; setTimeout(()=>{ loadDocuments(); checkStatus(); },1000); } else showToast(data.detail||"Upload thất bại",'error'); }catch(err){ showToast("Không kết nối được với server",'error'); } btn.innerHTML=originalHTML; btn.disabled=false; }
         function escapeHtml(text){ const div=document.createElement('div'); div.textContent=text; return div.innerHTML; }
         
         // ========== CÁC HÀM XEM/TẢI TÀI LIỆU ==========
-        async function viewDocumentFromChat(fileName) { const encodedFileName = encodeURIComponent(fileName); try { const res = await fetch(`/api/view/${encodedFileName}`); const data = await res.json(); if (data.success) { window.open(data.url, '_blank'); showToast('Đang mở tài liệu...', 'success'); } else { showToast('Không thể xem tài liệu', 'error'); } } catch (error) { showToast('Lỗi khi xem tài liệu', 'error'); } }
+        async function viewDocumentFromChat(fileName) { const encodedFileName = encodeURIComponent(fileName); try { const res = await fetch(API_URL + `/api/view/${encodedFileName}`); const data = await res.json(); if (data.success) { window.open(data.url, '_blank'); showToast('Đang mở tài liệu...', 'success'); } else { showToast('Không thể xem tài liệu', 'error'); } } catch (error) { showToast('Lỗi khi xem tài liệu', 'error'); } }
         async function downloadDocumentFromChat(fileName) { const encodedFileName = encodeURIComponent(fileName); try { window.open(`/api/download/${encodedFileName}`, '_blank'); showToast(`Đang tải: ${fileName}`, 'success'); } catch (error) { showToast('Lỗi khi tải file', 'error'); } }
         function confirmDownloadFromChat(fileName, displayName) { const showName = displayName || fileName; const modal = document.createElement('div'); modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 fade-in'; modal.innerHTML = `<div class="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4 shadow-xl"><div class="flex items-center gap-3 mb-4"><i class="fas fa-file-pdf text-red-500 text-2xl"></i><h3 class="text-lg font-semibold text-gray-800 dark:text-white">Xác nhận tải tài liệu</h3></div><p class="text-gray-600 dark:text-gray-300 mb-2">Bạn có muốn tải tài liệu này về máy?</p><p class="text-sm text-gray-500 dark:text-gray-400 mb-4 break-all">📄 ${escapeHtml(showName)}</p><div class="flex gap-3 justify-end"><button onclick="this.closest('.fixed').remove()" class="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-400 transition">Hủy</button><button onclick="downloadDocumentFromChat('${fileName}'); this.closest('.fixed').remove()" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition flex items-center gap-2"><i class="fas fa-download"></i> Tải về</button></div></div>`; document.body.appendChild(modal); modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); }); }
         
@@ -617,7 +620,7 @@
         }
         
         async function handleDownloadRequest(fileName) {
-            try { const res = await fetch("/api/documents"); const data = await res.json(); if (data.success) { const doc = data.documents.find(d => d.original_name === fileName || d.name === fileName || d.original_name.includes(fileName) || d.name.includes(fileName)); if (doc) { confirmDownloadFromChat(doc.name, doc.original_name); return true; } } return false; } catch (error) { console.error("Lỗi:", error); return false; } }
+            try { const res = await fetch(API_URL + "/api/documents"); const data = await res.json(); if (data.success) { const doc = data.documents.find(d => d.original_name === fileName || d.name === fileName || d.original_name.includes(fileName) || d.name.includes(fileName)); if (doc) { confirmDownloadFromChat(doc.name, doc.original_name); return true; } } return false; } catch (error) { console.error("Lỗi:", error); return false; } }
         
         async function askQuestion() {
             const question = document.getElementById('question-input').value.trim();
@@ -671,7 +674,7 @@
             // Nếu là câu hỏi về một tài liệu cụ thể
             if (isDocumentQuestion && documentName) {
                 try {
-                    const res = await fetch("/api/documents");
+                    const res = await fetch(API_URL + "/api/documents");
                     const data = await res.json();
                     if (data.success) {
                         const doc = data.documents.find(d => 
@@ -706,7 +709,7 @@
             try {
                 let response, data;
                 if (isSuggestion) {
-                    response = await fetch("/suggest-documents", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question: question }) });
+                    response = await fetch(API_URL + "/suggest-documents", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question: question }) });
                     data = await response.json();
                     if (response.ok) {
                         addSuggestionMessage(question, data.answer, data.suggestions || []);
@@ -715,13 +718,13 @@
                         addMessageToCurrentChat('bot', "❌ " + (data.detail || "Không thể gợi ý tài liệu"));
                     }
                 } else {
-                    response = await fetch("/ask", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question: question }) });
+                    response = await fetch(API_URL + "/ask", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question: question }) });
                     data = await response.json();
                     if (response.ok) {
                         const sources = data.sources || [];
                         if (sources && sources.length > 0) {
                             try {
-                                const docRes = await fetch("/api/documents");
+                                const docRes = await fetch(API_URL + "/api/documents");
                                 const docData = await docRes.json();
                                 if (docData.success) {
                                     const suggestions = [];
